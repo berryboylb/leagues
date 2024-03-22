@@ -56,7 +56,7 @@ func GetSingleUser(ID string) (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = userCollection.FindOne(ctx, bson.M{"id": objID}).Decode(&user)
+	err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
