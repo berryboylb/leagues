@@ -19,9 +19,9 @@ import (
 )
 
 var userCollection *mongo.Collection = db.GetCollection(db.MongoClient, "users")
+
 var adminEmail string
 var adminUser models.User
-
 
 func init() {
 	err := godotenv.Load()
@@ -121,5 +121,52 @@ func SeedTeams() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Teams seeded successfully!")
+	seedPlayers()
+
+	fmt.Println("Teams and players seeded successfully!")
 }
+
+func generateUniquePlayers(teams []models.Team) {
+	players := make([]interface{}, 0)
+	playerNames := []string{"John", "Emma", "Michael", "Sophia", "William", "Olivia", "James", "Amelia", "Benjamin", "Isabella", "tim", "joe", "fred", "joyboy"}
+	for _, team := range teams {
+		for j := 0; j < 11; j++ {
+			name := fmt.Sprintf("%s %d", playerNames[rand.Intn(len(playerNames))], j+1)
+
+			player := models.Player{
+				ID:        primitive.NewObjectID(),
+				Name:      name,
+				Image:     fmt.Sprintf("player%d.jpg", rand.Intn(10)+1),
+				Position:  []string{"Forward", "Midfielder", "Defender", "Goalkeeper"}[rand.Intn(4)],
+				TeamID:    team.ID,
+				Status:    models.Active,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+			players = append(players, player)
+		}
+	}
+	_, err := playerCollection.InsertMany(context.Background(), players)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+func seedPlayers() {
+	if empty := isCollectionEmpty(playerCollection); empty {
+		var teams []models.Team
+		cursor, err := teamCollection.Find(context.Background(), bson.M{})
+		if err != nil {
+			fmt.Errorf("failed to find teams: %w", err)
+			return
+		}
+		defer cursor.Close(context.Background())
+		if err := cursor.All(context.Background(), &teams); err != nil {
+			fmt.Errorf("failed to decode teams: %w", err)
+			return
+		}
+		generateUniquePlayers(teams)
+	}
+}
+

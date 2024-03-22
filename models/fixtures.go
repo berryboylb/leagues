@@ -55,18 +55,22 @@ type Fixture struct {
 }
 
 type Player struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" `
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Name     string             `bson:"name" json:"name"`
 	Image    string             `bson:"img" json:"img"`
 	Position string             `bson:"position" json:"position"`
 	TeamID   primitive.ObjectID `bson:"team_id" json:"team_id"`
 	Status   PlayerStatus       `bson:"status" json:"status"`
+	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt         time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
 type Stats struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty"`
 	HomeTeamStats StatDetails        `bson:"home_team_stats" json:"home_team_stats"`
 	AwayTeamStats StatDetails        `bson:"away_team_stats" json:"away_team_stats"`
+	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt         time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
 type StatDetails struct {

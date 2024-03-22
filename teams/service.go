@@ -17,6 +17,7 @@ import (
 
 var teamCollection *mongo.Collection = db.GetCollection(db.MongoClient, "teams")
 var trophyCollection *mongo.Collection = db.GetCollection(db.MongoClient, "trophies")
+var playerCollection *mongo.Collection = db.GetCollection(db.MongoClient, "players")
 var duration time.Duration = 10 * time.Second
 
 func init() {
