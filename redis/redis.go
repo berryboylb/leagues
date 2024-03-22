@@ -2,6 +2,8 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
@@ -9,12 +11,10 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"encoding/json"
 )
 
 var client *redis.Client
 var ctx = context.Background()
-
 
 func init() {
 	err := godotenv.Load()
@@ -27,7 +27,7 @@ func init() {
 	redisHost := os.Getenv("REDIS_HOST")
 	fmt.Println(redisPassword, redisDB, redisHost)
 
-	if  redisDB == "" || redisHost == "" {
+	if redisDB == "" || redisHost == "" {
 		panic("Error loading redis password, db or host")
 	}
 
@@ -37,17 +37,17 @@ func init() {
 	}
 	client = redis.NewClient(&redis.Options{
 		Addr:     redisHost,
-		Password: redisPassword, 
-		DB:       hostNumber,    
+		Password: redisPassword,
+		DB:       hostNumber,
 	})
 
 	Test()
 }
+
 // exposes client to be used by other packages
 func GetClient() *redis.Client {
 	return client
 }
-
 
 // Test function to test connection to redis
 func Test() {
@@ -55,7 +55,6 @@ func Test() {
 	if err != nil {
 		fmt.Println(err.Error())
 		panic(err)
-		return
 	}
 	fmt.Println(ping)
 }
@@ -79,7 +78,6 @@ func StoreStruct(value interface{}) ([]byte, error) {
 	return jsonValue, nil
 }
 
-
 // UnmarshalStruct unserializes a JSON string into a struct.
 func UnmarshalStruct(jsonValue []byte, result interface{}) error {
 	err := json.Unmarshal(jsonValue, &result)
@@ -88,7 +86,6 @@ func UnmarshalStruct(jsonValue []byte, result interface{}) error {
 	}
 	return nil
 }
-
 
 func Retrieve(key string) (string, error) {
 	result, err := client.Get(ctx, key).Result()
@@ -101,4 +98,15 @@ func Retrieve(key string) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func Delete(key string) error {
+	_, err := client.Del(ctx, key).Result()
+	if err != nil {
+		if !errors.Is(err, redis.Nil) {
+			return fmt.Errorf("failed to delete user data from Redis: %v", err)
+		}
+		return err
+	}
+	return nil
 }
