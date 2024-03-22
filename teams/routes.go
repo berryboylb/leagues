@@ -14,10 +14,10 @@ func TeamRoutes(superRoute *gin.RouterGroup) {
 	teamRouter := superRoute.Group("/teams")
 	{
 		teamRouter.Use(jwt.Middleware())
+		teamRouter.POST("/", middleware.RolesMiddleware(admins), createHandler)
 		teamRouter.GET("/", getHandler)
 		teamRouter.GET("/:id", getSingleHandler)
-		teamRouter.POST("/", middleware.RolesMiddleware(admins), createHandler)
-		teamRouter.PATCH("/", middleware.RolesMiddleware(admins), updateHandler)
-		teamRouter.DELETE("/", middleware.RolesMiddleware(admins), deleteHandler)
+		teamRouter.PATCH("/:id", middleware.RolesMiddleware(admins), updateHandler)
+		teamRouter.DELETE("/:id", middleware.RolesMiddleware(admins), deleteHandler)
 	}
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,10 +15,17 @@ import (
 
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"strings"
 )
+
+var adminFirstName string
+var adminLastName string
+var adminEmail string
+var adminPassword string
 
 var userCollection *mongo.Collection = db.GetCollection(db.MongoClient, "users")
 var duration time.Duration = 10 * time.Second
@@ -34,6 +42,46 @@ func init() {
 		if err != nil {
 			fmt.Println("Failed to index:", err)
 			return
+		}
+	}
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
+	adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
+	adminLastName = os.Getenv("ADMIN_FIRST_NAME")
+	adminEmail = os.Getenv("ADMIN_EMAIL")
+	adminPassword = os.Getenv("ADMIN_PASSWORD")
+
+	if adminFirstName == "" || adminEmail == "" || adminPassword == "" || adminLastName == "" {
+		log.Fatal("Error loading super admin details")
+	}
+	createAdmin()
+}
+
+func createAdmin() {
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+	var user models.User
+	err := userCollection.FindOne(ctx, bson.M{"email": strings.ToLower(adminEmail)}).Decode(&user)
+	if err != nil {
+		hash, _ := helpers.HashPassword(adminPassword, 8)
+		if err == mongo.ErrNoDocuments {
+			newUser := models.User{
+				FirstName: adminFirstName,
+				LastName:  adminLastName,
+				Email:     adminEmail,
+				RoleName:  models.SuperAdminRole,
+				Password:  hash,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+			_, err := createUser(newUser)
+			if err != nil {
+				log.Fatal("Error creating super admin details")
+				return
+			}
 		}
 	}
 }

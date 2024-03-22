@@ -132,7 +132,7 @@ func getUsers(filters UserRequest, pageNumber string, pageSize string) ([]models
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 
-	fOpt := options.FindOptions{Limit: &perPage, Skip: &offset}
+	fOpt := options.FindOptions{Limit: &perPage, Skip: &offset, Sort: bson.D{{"created_at", -1}}}
 	cOpt := options.CountOptions{Limit: &perPage, Skip: &offset}
 
 	total, err := userCollection.CountDocuments(ctx, filter, &cOpt)

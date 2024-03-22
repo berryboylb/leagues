@@ -87,22 +87,42 @@ func createTeam(team models.Team) (*models.Team, error) {
 	return &insertedTeam, nil
 }
 
-func getSingleTeam(id string) (*models.Team, error) {
+func getSingleTeam(id string) (*TeamWithCreator, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 
-	objId, err := primitive.ObjectIDFromHex(id)
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid ObjectID: %v", err)
 	}
 
-	var team models.Team
-	err = teamCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&team)
+	pipeline := mongo.Pipeline{
+		{{"$match", bson.D{{"_id", objID}}}},
+		{{"$lookup", bson.D{
+			{"from", "users"},
+			{"localField", "created_by"},
+			{"foreignField", "_id"},
+			{"as", "created_by"},
+		}}},
+		{{"$unwind", "$created_by"}},
+	}
+
+	cursor, err := teamCollection.Aggregate(ctx, pipeline)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, fmt.Errorf("team with the id %v is not found", id)
 		}
-		return nil, fmt.Errorf("failed to fetch team: %v", err)
+		return nil, fmt.Errorf("failed to execute aggregation pipeline: %v", err)
+	}
+
+	var team TeamWithCreator
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&team); err != nil {
+			return nil, fmt.Errorf("failed to decode team: %v", err)
+		}
+	} else {
+		// If no documents are returned by the pipeline
+		return nil, fmt.Errorf("team with the id %v is not found", id)
 	}
 
 	return &team, nil
@@ -210,7 +230,7 @@ func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 
-	fOpt := options.FindOptions{Limit: &perPage, Skip: &offset}
+	fOpt := options.FindOptions{Limit: &perPage, Skip: &offset, Sort: bson.D{{"created_at", -1}}}
 	cOpt := options.CountOptions{Limit: &perPage, Skip: &offset}
 
 	total, err := teamCollection.CountDocuments(ctx, filter, &cOpt)

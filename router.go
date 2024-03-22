@@ -6,6 +6,7 @@ import (
 	"league/auth"
 	"league/users"
 	"league/fixtures"
+	"league/teams"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {
@@ -13,4 +14,5 @@ func AddRoutes(superRoute *gin.RouterGroup) {
 	auth.AuthRoutes(superRoute)
 	users.UserRoutes(superRoute)
 	fixtures.FixtureRoutes(superRoute)
+	teams.TeamRoutes(superRoute)
 }
