@@ -1,11 +1,13 @@
 package users
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"league/helpers"
 	"league/models"
-	
+
 	"net/http"
 )
 
@@ -67,6 +69,7 @@ func updateUserHandler(ctx *gin.Context) {
 		})
 		return
 	}
+	fmt.Println(user, "user")
 	var req UserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
@@ -77,9 +80,9 @@ func updateUserHandler(ctx *gin.Context) {
 		return
 	}
 
-	id := user.Id.String()
+	id := user.Id.Hex()
 	updatedUser, err := updateUser(id, req)
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
 			StatusCode: http.StatusBadRequest,
@@ -105,7 +108,8 @@ func deleteUserHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = deleteUser(user.Id.String())
+	fmt.Println(user)
+	err = deleteUser(user.Id)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

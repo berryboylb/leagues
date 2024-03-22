@@ -72,16 +72,16 @@ func updateUser(ID string, update UserRequest) (*models.User, error) {
 	return &user, nil
 }
 
-func deleteUser(ID string) error {
+func deleteUser(ID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 
-	objId, err := primitive.ObjectIDFromHex(ID)
-	if err != nil {
-		return fmt.Errorf("invalid ObjectID: %v", err)
-	}
+	// objId, err := primitive.ObjectIDFromHex(ID)
+	// if err != nil {
+	// 	return fmt.Errorf("invalid ObjectID: %v", err)
+	// }
 
-	result, err := userCollection.DeleteOne(ctx, bson.M{"id": objId})
+	result, err := userCollection.DeleteOne(ctx, bson.M{"_id": ID})
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %v", err)
 	}
@@ -91,7 +91,7 @@ func deleteUser(ID string) error {
 	}
 
 	// Delete user data from Redis
-	err = redis.Delete(ID)
+	err = redis.Delete(ID.Hex())
 	if err != nil {
 		return err
 	}

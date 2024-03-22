@@ -7,6 +7,8 @@ import (
 
 	// apitoolkit "github.com/apitoolkit/apitoolkit-go"
 	"github.com/gin-gonic/gin"
+	// "github.com/gin-contrib/ratelimit"
+    "github.com/gin-contrib/cors" 
 	"github.com/joho/godotenv"
 	"league/db"
 )
@@ -25,6 +27,11 @@ func main() {
 	app := gin.New()
 	// app.Use(apitoolkitClient.GinMiddleware)
 	router := app.Group("/api/v1")
+
+	router.Use(cors.Default())
+
+    // // Apply rate limiting middleware
+    // router.Use(ratelimit.New(ratelimit.IPRateLimiter(10, 1*time.Minute)))
 
 	AddRoutes(router)
 

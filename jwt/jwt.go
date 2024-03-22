@@ -35,7 +35,7 @@ func init() {
 	SecretKey = []byte(secretKey)
 }
 
-func GenerateJWT(providerID string) (string, error) {
+func GenerateJWT(providerID primitive.ObjectID) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["authorized"] = true
@@ -48,23 +48,24 @@ func GenerateJWT(providerID string) (string, error) {
 	return tokenString, nil
 }
 
-func GetSingleUser(ID string) (*models.User, error) {
+func GetSingleUser(ID primitive.ObjectID) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var user models.User
 	defer cancel()
-	objID, err := primitive.ObjectIDFromHex(ID)
-	if err != nil {
-		return nil, err
-	}
-	err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
+	// objID, err := primitive.ObjectIDFromHex(ID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(objID, "hd6hdh")
+	err := userCollection.FindOne(ctx, bson.M{"_id": ID}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func GetUser(ID string) (models.User, error) {
-	userStr, err := cisredis.Retrieve(ID)
+func GetUser(ID primitive.ObjectID) (models.User, error) {
+	userStr, err := cisredis.Retrieve(ID.Hex())
 	if err != nil {
 		if err == redis.Nil {
 			// Fetch user data from database
@@ -73,12 +74,12 @@ func GetUser(ID string) (models.User, error) {
 				return models.User{}, fmt.Errorf("failed to fetch user data from database: %w", err)
 			}
 			// Store user data in Redis with an expiration time
-			userByte, err := cisredis.StoreStruct(user) 
+			userByte, err := cisredis.StoreStruct(user)
 			if err != nil {
 				return models.User{}, fmt.Errorf("failed to store user data in Redis: %w", err)
 			}
 			expiration := 10 * time.Minute
-			err = cisredis.Store(ID, userByte, expiration)
+			err = cisredis.Store(ID.Hex(), userByte, expiration)
 			if err != nil {
 				return models.User{}, fmt.Errorf("failed to store user data in Redis with expiration: %w", err)
 			}
@@ -135,7 +136,16 @@ func Middleware() gin.HandlerFunc {
 		}
 
 		providerID := claims["id"].(string)
-		user, err := GetUser(providerID)
+		objID, err := primitive.ObjectIDFromHex(providerID)
+		if err != nil {
+			helpers.CreateResponse(c, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
+			return
+		}
+		user, err := GetUser(objID)
 		if err != nil {
 			helpers.CreateResponse(c, helpers.Response{
 				Message:    err.Error(),

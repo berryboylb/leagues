@@ -125,8 +125,8 @@ func getUserFromOtp(otp string, email string) (*models.User, error) {
 	var user models.User
 	defer cancel()
 	filter := bson.M{
-		"email":              strings.ToLower(email),
-		"verification_token": otp,
+		"email": strings.ToLower(email),
+		// "verification_token": otp,
 		"expires_at": bson.M{
 			"$gt": time.Now(),
 		},
@@ -140,6 +140,10 @@ func getUserFromOtp(otp string, email string) (*models.User, error) {
 		}
 		// If other error occurred
 		return nil, fmt.Errorf("failed to fetch user by token: %v", err)
+	}
+
+	if user.VerificationToken != otp {
+		return nil, fmt.Errorf("invalid verification token")
 	}
 
 	return &user, nil
@@ -174,12 +178,13 @@ func forgotPassword(email string) error {
 	return nil
 }
 
-func getUser(otp string) (*models.User, error) {
+func getUser(otp string, email string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	var user models.User
 	defer cancel()
 	filter := bson.M{
-		"verification_token": otp,
+		"email": strings.ToLower(email),
+		// "verification_token": otp,
 		"expires_at": bson.M{
 			"$gt": time.Now(),
 		},
@@ -193,6 +198,10 @@ func getUser(otp string) (*models.User, error) {
 		}
 		// If other error occurred
 		return nil, fmt.Errorf("failed to fetch user by token: %v", err)
+	}
+
+	if user.VerificationToken != otp {
+		return nil, fmt.Errorf("invalid verification token")
 	}
 
 	return &user, nil

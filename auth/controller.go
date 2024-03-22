@@ -5,6 +5,7 @@ import (
 	// "fmt"
 	// "log"
 	"net/http"
+	// "strings"
 	// "net/url"
 	// "os"
 	// "strings"
@@ -104,7 +105,9 @@ func loginUserHandler(ctx *gin.Context) {
 		return
 	}
 
-	token, err := jwt.GenerateJWT(user.Id.String())
+	// strings.
+
+	token, err := jwt.GenerateJWT(user.Id)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -237,7 +240,7 @@ func confirmLoginAdminHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	token, err := jwt.GenerateJWT(user.Id.String())
+	token, err := jwt.GenerateJWT(user.Id)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -299,7 +302,7 @@ func resetPasswordHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	user, err := getUser(req.Otp)
+	user, err := getUser(req.Otp, req.Email)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

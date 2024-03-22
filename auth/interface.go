@@ -21,6 +21,7 @@ type OtpRequest struct {
 
 type Otp struct {
 	Otp string `json:"otp" binding:"required,min=4"`
+	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=5"`
 }
 
