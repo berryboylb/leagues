@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"league/helpers"
 	"league/models"
 )
@@ -171,5 +173,69 @@ func deleteHandler(ctx *gin.Context) {
 		Message:    "successfully deleted team",
 		StatusCode: http.StatusOK,
 		Data:       nil,
+	})
+}
+
+func getPlayersHandler(ctx *gin.Context) {
+	var (
+		teamID primitive.ObjectID
+		err    error
+	)
+
+	if team := ctx.Query("team_id"); team != "" {
+		if teamID, err = primitive.ObjectIDFromHex(team); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	query := PlayerRequest{
+		Name:        ctx.Query("name"),
+		Position:  ctx.Query("position"),
+		TeamID: teamID,
+	}
+
+	players, total, page, perPage, err := getPlayers(query, ctx.Query("page"), ctx.Query("per_page"))
+
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched players",
+		StatusCode: http.StatusOK,
+		Data: map[string]interface{}{
+			"data":     players,
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
+	})
+}
+
+func getPlayerHandler(ctx *gin.Context) {
+	player, err := getSinglePlayer(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched player",
+		StatusCode: http.StatusOK,
+		Data:       player,
 	})
 }

@@ -17,7 +17,7 @@ import (
 func EnvMongoURI() string {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env var for mongodb file")
 	}
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
@@ -27,7 +27,6 @@ func EnvMongoURI() string {
 }
 
 func ConnectDB() *mongo.Client {
-	// fmt.Println(uri, "nnhh")
 	client, err := mongo.NewClient(options.Client().ApplyURI(EnvMongoURI()))
 	if err != nil {
 		log.Fatal(err)

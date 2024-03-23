@@ -168,6 +168,7 @@ func updateUser(ID string, update TeamRequest) (*models.Team, error) {
 		"founded_year": update.FoundedYear,
 		"stadium":      update.Stadium,
 		"sponsor":      update.Sponsor,
+		"updated_at": time.Now(),
 	}
 
 	// Perform the update operation
@@ -251,4 +252,77 @@ func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.
 	}
 
 	return teams, total, page, perPage, nil
+}
+
+
+func getPlayers(filters PlayerRequest, pageNumber string, pageSize string) ([]models.Player, int64, int64, int64, error) {
+	perPage := int64(15)
+	page := int64(1)
+
+	if pageSize != "" {
+		if perPageNum, err := strconv.Atoi(pageSize); err == nil {
+			perPage = int64(perPageNum)
+		}
+	}
+
+	if pageNumber != "" {
+		if num, err := strconv.Atoi(pageNumber); err == nil {
+			page = int64(num)
+		}
+	}
+
+	offset := (page - 1) * perPage
+
+	filter := bson.M{}
+	if filters.Name != "" {
+		filter["name"] = filters.Name
+	}
+	if filters.Position != "" {
+		filter["position"] = filters.Position
+	}
+	if filters.TeamID != primitive.NilObjectID {
+		filter["team_id"] = filters.TeamID
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+
+	fOpt := options.FindOptions{Limit: &perPage, Skip: &offset, Sort: bson.D{{"created_at", -1}}}
+	cOpt := options.CountOptions{Limit: &perPage, Skip: &offset}
+
+	total, err := playerCollection.CountDocuments(ctx, filter, &cOpt)
+	if err != nil {
+		return nil, 0, 0, 0, fmt.Errorf("failed to count players: %v", err)
+	}
+
+	cursor, err := playerCollection.Find(ctx, filter, &fOpt)
+	if err != nil {
+		return nil, 0, 0, 0, fmt.Errorf("failed to find players: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	var players []models.Player
+	if err := cursor.All(ctx, &players); err != nil {
+		return nil, 0, 0, 0, fmt.Errorf("failed to decode players: %v", err)
+	}
+
+	return players, total, page, perPage, nil
+}
+
+func getSinglePlayer(ID string) (*models.Player, error){
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+
+	objId, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ObjectID: %v", err)
+	}
+
+	var player models.Player
+	err = playerCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&player)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch player: %v", err)
+	}
+
+	return &player, nil
 }

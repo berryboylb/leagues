@@ -2,7 +2,7 @@ package teams
 
 import (
 	"time"
-	
+
 	"league/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,7 +19,6 @@ type TeamRequest struct {
 
 type TeamFilterRequest struct{}
 
-
 type TeamWithCreator struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id" `
 	Name        string             `bson:"name" validate:"required" json:"name"`
@@ -31,4 +30,10 @@ type TeamWithCreator struct {
 	CreatedBy   models.User        `bson:"created_by" json:"created_by"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+type PlayerRequest struct {
+	Name     string             `json:"name" binding:"required,min=3"`
+	Position string             `json:"position" binding:"required,min=3"`
+	TeamID   primitive.ObjectID `json:"team_id" binding:"required,min=3"`
 }
