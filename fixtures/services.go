@@ -212,6 +212,7 @@ func getFixturesByStatus(status string, pageNumber string, pageSize string) ([]m
 	return fixture, total, page, perPage, nil
 }
 
+
 func getFixtures(query SearchFeaturesRequest, pageNumber string, pageSize string) ([]Fixture, int64, int64, int64, error) {
 	perPage := int64(15)
 	page := int64(1)
@@ -220,8 +221,8 @@ func getFixtures(query SearchFeaturesRequest, pageNumber string, pageSize string
 		if perPageNum, err := strconv.Atoi(pageSize); err == nil {
 			perPage = int64(perPageNum)
 		}
-		if perPage > 100 {
-			perPage = 100
+		if perPage > 50 {
+			perPage = 50
 		}
 	}
 
@@ -229,43 +230,19 @@ func getFixtures(query SearchFeaturesRequest, pageNumber string, pageSize string
 		if num, err := strconv.Atoi(pageNumber); err == nil {
 			page = int64(num)
 		}
-		
+
 	}
-	offset := (page - 1) * perPage
 
 	filter := bson.M{}
 
 	if query.Query != "" {
+		regexQuery := bson.M{"$regex": query.Query, "$options": "i"}
 		filter["$or"] = bson.A{
-			bson.M{"unique_link": bson.M{"$regex": query.Query, "$options": "i"}},
-			bson.M{"status": bson.M{"$regex": query.Query, "$options": "i"}},
-			bson.M{"stadium": bson.M{"$regex": query.Query, "$options": "i"}},
-			bson.M{"referee": bson.M{"$regex": query.Query, "$options": "i"}},
+			bson.M{"unique_link": regexQuery},
+			bson.M{"status": regexQuery},
+			bson.M{"stadium": regexQuery},
+			bson.M{"referee": regexQuery},
 		}
-	}
-
-	if query.Competition != primitive.NilObjectID {
-		filter["competition_id"] = query.Competition
-	}
-
-	if query.HomeTeam != primitive.NilObjectID {
-		filter["home_team_id"] = query.HomeTeam
-	}
-
-	if query.AwayTeam != primitive.NilObjectID {
-		filter["away_team_id"] = query.AwayTeam
-	}
-
-	if query.UniqueLink != "" {
-		filter["unique_link"] = query.UniqueLink
-	}
-
-	if query.Referee != "" {
-		filter["referee"] = query.Referee
-	}
-
-	if query.Status != "" {
-		filter["status"] = query.Status
 	}
 
 	// Check if query.From is not zero, then add it to the filter
@@ -285,38 +262,32 @@ func getFixtures(query SearchFeaturesRequest, pageNumber string, pageSize string
 	defer cancel()
 
 	pipeline := mongo.Pipeline{
-		bson.D{{"$match", filter}},
-		bson.D{{"$lookup", bson.D{
+		{{"$match", filter}},
+		{{"$sort", bson.D{{"created_at", -1}}}},
+		{{"$skip", (page - 1) * perPage}},
+		{{"$limit", perPage}},
+		{{"$lookup", bson.D{
 			{"from", "competitions"},
 			{"localField", "competition_id"},
 			{"foreignField", "_id"},
 			{"as", "competition_id"},
 		}}},
-		bson.D{{"$unwind", "$competition_id"}},
-		bson.D{{"$lookup", bson.D{
+		{{"$unwind", "$competition_id"}},
+		{{"$lookup", bson.D{
 			{"from", "teams"},
 			{"localField", "home_team_id"},
 			{"foreignField", "_id"},
 			{"as", "home_team_id"},
 		}}},
-		bson.D{{"$unwind", "$home_team_id"}},
-		bson.D{{"$lookup", bson.D{
+		{{"$unwind", "$home_team_id"}},
+		{{"$lookup", bson.D{
 			{"from", "teams"},
 			{"localField", "away_team_id"},
 			{"foreignField", "_id"},
 			{"as", "away_team_id"},
 		}}},
-		bson.D{{"$unwind", "$away_team_id"}},
-		bson.D{{"$sort", bson.D{{"created_at", -1}}}},
-		bson.D{{"$skip", offset}},
-		bson.D{{"$limit", perPage}},
+		{{"$unwind", "$away_team_id"}},
 	}
-
-	// batchsize := int32(100)
-
-	// aggOpt := options.AggregateOptions{
-	// 	BatchSize: &batchsize, // Adjust batch size as needed
-	// }
 
 	cursor, err := fixtureCollection.Aggregate(ctx, pipeline)
 	if err != nil {

@@ -16,13 +16,13 @@ type CompetitionRequest struct {
 }
 
 type SearchFeaturesRequest struct {
-	Competition primitive.ObjectID `json:"competition"`
-	UniqueLink  string             `json:"link"`
-	HomeTeam    primitive.ObjectID `json:"home_team"`
-	AwayTeam    primitive.ObjectID `json:"away_team"`
+	// Competition primitive.ObjectID `json:"competition"`
+	// UniqueLink  string             `json:"link"`
+	// HomeTeam    primitive.ObjectID `json:"home_team"`
+	// AwayTeam    primitive.ObjectID `json:"away_team"`
 	Query       string             `json:"query"`
-	Referee     string             `json:"referee"`
-	Status      models.Status      `json:"status"`
+	// Referee     string             `json:"referee"`
+	// Status      models.Status      `json:"status"`
 	From        time.Time          `json:"from"`
 	To          time.Time          `json:"to"`
 }

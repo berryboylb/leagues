@@ -2,7 +2,7 @@ package fixtures
 
 import (
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 
 	"league/helpers"
 	"league/models"
@@ -228,21 +228,17 @@ func getFixtureByHash(ctx *gin.Context) {
 	})
 }
 
-func searchHandler(ctx *gin.Context) {
-	var (
-		compId primitive.ObjectID
-		homeid primitive.ObjectID
-		awayid primitive.ObjectID
-		status models.Status
-		from   time.Time
-		to     time.Time
-		err    error
-	)
+var (
+	from      time.Time
+	to        time.Time
+	searchErr error
+)
 
+func searchHandler(ctx *gin.Context) {
 	if date := ctx.Query("from"); date != "" {
-		if from, err = time.Parse("2006-01-02T15:04:05Z", date); err != nil {
+		if from, searchErr = time.Parse("2006-01-02T15:04:05Z", date); searchErr != nil {
 			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
+				Message:    searchErr.Error(),
 				StatusCode: http.StatusBadRequest,
 				Data:       nil,
 			})
@@ -251,67 +247,16 @@ func searchHandler(ctx *gin.Context) {
 	}
 
 	if date := ctx.Query("to"); date != "" {
-		if to, err = time.Parse("2006-01-02T15:04:05Z", date); err != nil {
+		if to, searchErr = time.Parse("2006-01-02T15:04:05Z", date); searchErr != nil {
 			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
+				Message:    searchErr.Error(),
 				StatusCode: http.StatusBadRequest,
 				Data:       nil,
 			})
 			return
 		}
 	}
-
-	if id := ctx.Query("competition_id"); id != "" {
-		if compId, err = primitive.ObjectIDFromHex(id); err != nil {
-			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
-				StatusCode: http.StatusBadRequest,
-				Data:       nil,
-			})
-			return
-		}
-	}
-
-	if id := ctx.Query("home_team_id"); id != "" {
-		if homeid, err = primitive.ObjectIDFromHex(id); err != nil {
-			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
-				StatusCode: http.StatusBadRequest,
-				Data:       nil,
-			})
-			return
-		}
-	}
-
-	if id := ctx.Query("away_team_id"); id != "" {
-		if awayid, err = primitive.ObjectIDFromHex(id); err != nil {
-			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
-				StatusCode: http.StatusBadRequest,
-				Data:       nil,
-			})
-			return
-		}
-	}
-
-	if id := ctx.Query("status"); id != "" {
-		if status, err = parseStatus(id); err != nil {
-			helpers.CreateResponse(ctx, helpers.Response{
-				Message:    err.Error(),
-				StatusCode: http.StatusBadRequest,
-				Data:       nil,
-			})
-			return
-		}
-	}
-
 	query := SearchFeaturesRequest{
-		Competition: compId,
-		HomeTeam:    homeid,
-		AwayTeam:    awayid,
-		Status:      status,
-		UniqueLink:  ctx.Query("unique_link"),
-		Referee:     ctx.Query("referee"),
 		Query:       ctx.Query("query"),
 		From:        from,
 		To:          to,
