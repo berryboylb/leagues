@@ -3,6 +3,8 @@ package main
 import (
 	// "context"
 	"log"
+	"flag"
+	"time"
 	// "os"
 
 	// apitoolkit "github.com/apitoolkit/apitoolkit-go"
@@ -11,7 +13,29 @@ import (
     "github.com/gin-contrib/cors" 
 	"github.com/joho/godotenv"
 	"league/db"
+	"github.com/fatih/color"
+	"go.uber.org/ratelimit"
 )
+
+var (
+	limit ratelimit.Limiter
+	rps   = flag.Int("rps", 100, "request per second")
+)
+
+func init() {
+	log.SetFlags(0)
+	log.SetPrefix("[GIN] ")
+	log.SetOutput(gin.DefaultWriter)
+}
+
+func leakBucket() gin.HandlerFunc {
+	prev := time.Now()
+	return func(ctx *gin.Context) {
+		now := limit.Take()
+		log.Print(color.CyanString("%v", now.Sub(prev)))
+		prev = now
+	}
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -24,16 +48,23 @@ func main() {
 	// 	log.Fatalf("Failed to load monitoring keys: %v", err)
 	// }
 
+	flag.Parse()
+
+	limit = ratelimit.New(*rps)
+
 	app := gin.New()
 	// app.Use(apitoolkitClient.GinMiddleware)
+	app.Use(cors.Default())
+	app.Use(leakBucket())
 	router := app.Group("/api/v1")
 
-	router.Use(cors.Default())
 
     // // Apply rate limiting middleware
     // router.Use(ratelimit.New(ratelimit.IPRateLimiter(10, 1*time.Minute)))
 
 	AddRoutes(router)
+
+	log.Printf(color.CyanString("Current Rate Limit: %v requests/s", *rps))
 
 	// connect db
 	db.ConnectDB()
