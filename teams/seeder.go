@@ -97,11 +97,11 @@ func generateTeams() []interface{} {
 	for i := 0; i < len(names); i++ {
 		team := models.Team{
 			ID:          primitive.NewObjectID(),
-			Name:        names[i],
-			State:       states[i],
-			Country:     "England",
+			Name:        strings.ToLower(names[i]),
+			State:       strings.ToLower(states[i]),
+			Country:     strings.ToLower("England"),
 			FoundedYear: rand.Intn(150) + 1871,
-			Stadium:     stadiums[i],
+			Stadium:     strings.ToLower(stadiums[i]),
 			Sponsor:     sponsors[i],
 			CreatedBy:   adminUser.Id,
 			CreatedAt:   time.Now(),
@@ -152,7 +152,6 @@ func generateUniquePlayers(teams []models.Team) {
 	}
 }
 
-
 func seedPlayers() {
 	if empty := isCollectionEmpty(playerCollection); empty {
 		var teams []models.Team
@@ -169,4 +168,3 @@ func seedPlayers() {
 		generateUniquePlayers(teams)
 	}
 }
-

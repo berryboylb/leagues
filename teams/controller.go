@@ -1,8 +1,10 @@
 package teams
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -79,13 +81,14 @@ func getHandler(ctx *gin.Context) {
 		}
 	}
 
-	query := TeamRequest{
+	query := TeamQueryRequest{
 		Name:        ctx.Query("name"),
 		Country:     ctx.Query("country"),
 		State:       ctx.Query("state"),
 		FoundedYear: foundedYear,
 		Stadium:     ctx.Query("stadium"),
 		Sponsor:     ctx.Query("sponsor"),
+		Query:      strings.ToLower(ctx.Query("query")),
 	}
 
 	teams, total, page, perPage, err := getTeam(query, ctx.Query("page"), ctx.Query("per_page"))
@@ -177,6 +180,7 @@ func deleteHandler(ctx *gin.Context) {
 }
 
 func getPlayersHandler(ctx *gin.Context) {
+	fmt.Println("hello")
 	var (
 		teamID primitive.ObjectID
 		err    error
@@ -223,6 +227,7 @@ func getPlayersHandler(ctx *gin.Context) {
 }
 
 func getPlayerHandler(ctx *gin.Context) {
+	fmt.Println("hell")
 	player, err := getSinglePlayer(ctx.Param("id"))
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{

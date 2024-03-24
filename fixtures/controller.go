@@ -8,11 +8,12 @@ import (
 	"league/models"
 
 	"net/http"
+	"strconv"
 	"time"
 )
 
 func createFixtureHandler(ctx *gin.Context) {
-	var req CreateFixture
+	var req CreateTestFixture
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -22,7 +23,7 @@ func createFixtureHandler(ctx *gin.Context) {
 		return
 	}
 
-	homeID, err := req.ParseHex(req.HomeTeamID)
+	randomString, err := generateRandomString(10)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -31,39 +32,9 @@ func createFixtureHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
-	awayID, err := req.ParseHex(req.AwayTeamID)
-	if err != nil {
+	if req.HomeTeamID == req.AwayTeamID {
 		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-
-	compID, err := req.ParseHex(req.CompetitionID)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-	status, err := parseStatus(req.Status)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-	date, err := req.ParseDate()
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
+			Message:    "home and away teams cannot be same",
 			StatusCode: http.StatusBadRequest,
 			Data:       nil,
 		})
@@ -71,23 +42,27 @@ func createFixtureHandler(ctx *gin.Context) {
 	}
 
 	newFixture := models.Fixture{
-		HomeTeamID:    homeID,
-		AwayTeamID:    awayID,
-		CompetitionID: compID,
-		Status:        status,
-		Date:          date,
+		HomeTeamID:    req.HomeTeamID,
+		AwayTeamID:    req.AwayTeamID,
+		CompetitionID: req.CompetitionID,
+		Status:        models.Status(req.Status),
+		Date:          req.Date,
 		Stadium:       req.Stadium,
 		Referee:       req.Referee,
-		UniqueLink:    "to be done",
+		UniqueLink:    randomString,
 		Away: models.Details{
 			Substitutes: req.Away.Substitutes,
 			Lineup:      req.Away.Lineup,
 			Formation:   req.Away.Formation,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 		Home: models.Details{
 			Substitutes: req.Home.Substitutes,
 			Lineup:      req.Home.Lineup,
 			Formation:   req.Home.Formation,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -134,7 +109,7 @@ func viewFixturesByTypeHandler(ctx *gin.Context) {
 }
 
 func updateFixtureHandler(ctx *gin.Context) {
-	var req UpdateRequest
+	var req UpdateFixture
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -143,8 +118,7 @@ func updateFixtureHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
-	homeID, err := req.ParseHex(req.HomeTeamID)
+	resp, err := updateFixture(ctx.Param("id"), req)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -153,59 +127,9 @@ func updateFixtureHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
-	awayID, err := req.ParseHex(req.AwayTeamID)
-	if err != nil {
+	if req.HomeTeamID == req.AwayTeamID {
 		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-
-	compID, err := req.ParseHex(req.CompetitionID)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-	status, err := parseStatus(req.Status)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-	date, err := req.ParseDate()
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusBadRequest,
-			Data:       nil,
-		})
-		return
-	}
-	update := UpdateFixture{
-		HomeTeamID:    homeID,
-		AwayTeamID:    awayID,
-		CompetitionID: compID,
-		Status:        status,
-		Date:          date,
-		Stadium:       req.Stadium,
-		Referee:       req.Referee,
-		UniqueLink:    "to be done",
-	}
-
-	resp, err := updateFixture(ctx.Param("id"), update)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
+			Message:    "home and away teams cannot be same",
 			StatusCode: http.StatusBadRequest,
 			Data:       nil,
 		})
@@ -218,7 +142,7 @@ func updateFixtureHandler(ctx *gin.Context) {
 	})
 }
 
-func updateFixtureStatus(ctx *gin.Context) {
+func updateFixtureStatsHandler(ctx *gin.Context) {
 	var req UpdateFixtureStats
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
@@ -264,7 +188,27 @@ func deleteFixtureHandler(ctx *gin.Context) {
 }
 
 func generateUniqueHash(ctx *gin.Context) {
+	length := 10
+	if ctx.Query("length") != "" {
+		if len, err := strconv.Atoi(ctx.Query("length")); err == nil {
+			length = len
+		}
+	}
+	randomString, err := generateRandomString(length)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
 
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully generated hash",
+		StatusCode: http.StatusOK,
+		Data:       randomString,
+	})
 }
 
 func getFixtureByHash(ctx *gin.Context) {
@@ -290,8 +234,32 @@ func searchHandler(ctx *gin.Context) {
 		homeid primitive.ObjectID
 		awayid primitive.ObjectID
 		status models.Status
+		from   time.Time
+		to     time.Time
 		err    error
 	)
+
+	if date := ctx.Query("from"); date != "" {
+		if from, err = time.Parse("2006-01-02T15:04:05Z", date); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	if date := ctx.Query("to"); date != "" {
+		if to, err = time.Parse("2006-01-02T15:04:05Z", date); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
 
 	if id := ctx.Query("competition_id"); id != "" {
 		if compId, err = primitive.ObjectIDFromHex(id); err != nil {
@@ -344,6 +312,9 @@ func searchHandler(ctx *gin.Context) {
 		Status:      status,
 		UniqueLink:  ctx.Query("unique_link"),
 		Referee:     ctx.Query("referee"),
+		Query:       ctx.Query("query"),
+		From:        from,
+		To:          to,
 	}
 
 	resp, total, page, perPage, err := getFixtures(query, ctx.Query("page"), ctx.Query("per_page"))

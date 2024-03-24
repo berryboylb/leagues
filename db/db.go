@@ -74,21 +74,92 @@ func IndexField(collection mongo.Collection, field string, indexType int) error 
 	return nil
 }
 
-func IsIndexExists(ctx context.Context, collection *mongo.Collection, indexKey string) (bool, error) {
-    indexes, err := collection.Indexes().List(ctx)
-    if err != nil {
-        return false, err
-    }
-    defer indexes.Close(ctx)
+func IndexNormalField(collection mongo.Collection, field string, indexType int) error {
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{field: indexType}, // 1 for ascending, -1 for descending
+		Options: options.Index().SetUnique(false),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    for indexes.Next(ctx) {
-        var index bson.M
-        if err := indexes.Decode(&index); err != nil {
-            return false, err
-        }
-        if val, ok := index["key"].(bson.M)[indexKey]; ok && val != nil {
-            return true, nil
-        }
-    }
-    return false, nil
+	_, err := collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		fmt.Println("Failed to create index:", err)
+		return err
+	}
+	fmt.Println("Index created successfully on %v field.", field)
+	return nil
 }
+
+func IndexSparse(collection mongo.Collection, field string, indexType int) error {
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{field: indexType}, // 1 for ascending, -1 for descending
+		Options: options.Index().SetSparse(true),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		fmt.Println("Failed to create index:", err)
+		return err
+	}
+	fmt.Println("Index created successfully on %v field.", field)
+	return nil
+}
+
+func IndexCompound(collection mongo.Collection, keys bson.M, indexType int) error {
+	indexModel := mongo.IndexModel{
+		Keys:    keys,
+		Options: options.Index().SetBackground(true),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		fmt.Println("Failed to create index:", err)
+		return err
+	}
+	fmt.Println("Index created successfully on %v field.", keys)
+	return nil
+}
+
+func IndexText(collection mongo.Collection, key string) error {
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{key: "text"},
+		Options: options.Index().SetName(fmt.Sprintf("%v_text_index", key)),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		fmt.Println("Failed to create index:", err)
+		return err
+	}
+	fmt.Println("Text Index created successfully on %v field.", key)
+	return nil
+}
+
+func IsIndexExists(ctx context.Context, collection *mongo.Collection, indexKey string) (bool, error) {
+	indexes, err := collection.Indexes().List(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer indexes.Close(ctx)
+
+	for indexes.Next(ctx) {
+		var index bson.M
+		if err := indexes.Decode(&index); err != nil {
+			return false, err
+		}
+		if val, ok := index["key"].(bson.M)[indexKey]; ok && val != nil {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+
+

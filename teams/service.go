@@ -60,6 +60,45 @@ func init() {
 			return
 		}
 	}
+
+	stateExists, err := db.IsIndexExists(context.Background(), teamCollection, "state")
+	if err != nil {
+		fmt.Println("Failed to check index existence:", err)
+		return
+	}
+	if !stateExists {
+		err = db.IndexSparse(*teamCollection, "state", 1)
+		if err != nil {
+			fmt.Println("Failed to index:", err)
+			return
+		}
+	}
+
+	countryExists, err := db.IsIndexExists(context.Background(), teamCollection, "country")
+	if err != nil {
+		fmt.Println("Failed to check index existence:", err)
+		return
+	}
+	if !countryExists {
+		err = db.IndexSparse(*teamCollection, "country", 1)
+		if err != nil {
+			fmt.Println("Failed to index:", err)
+			return
+		}
+	}
+
+	sponsorExists, err := db.IsIndexExists(context.Background(), teamCollection, "sponsor")
+	if err != nil {
+		fmt.Println("Failed to check index existence:", err)
+		return
+	}
+	if !sponsorExists {
+		err = db.IndexSparse(*teamCollection, "sponsor", 1)
+		if err != nil {
+			fmt.Println("Failed to index:", err)
+			return
+		}
+	}
 }
 
 func createTeam(team models.Team) (*models.Team, error) {
@@ -168,7 +207,7 @@ func updateUser(ID string, update TeamRequest) (*models.Team, error) {
 		"founded_year": update.FoundedYear,
 		"stadium":      update.Stadium,
 		"sponsor":      update.Sponsor,
-		"updated_at": time.Now(),
+		"updated_at":   time.Now(),
 	}
 
 	// Perform the update operation
@@ -194,7 +233,7 @@ func updateUser(ID string, update TeamRequest) (*models.Team, error) {
 	return &team, nil
 }
 
-func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.Team, int64, int64, int64, error) {
+func getTeam(filters TeamQueryRequest, pageNumber string, pageSize string) ([]models.Team, int64, int64, int64, error) {
 	perPage := int64(15)
 	page := int64(1)
 
@@ -213,6 +252,15 @@ func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.
 	offset := (page - 1) * perPage
 
 	filter := bson.M{}
+	if filters.Query != "" {
+		filter["$or"] = bson.A{
+			bson.M{"name": bson.M{"$regex":  filters.Query, "$options": "i"}},
+			bson.M{"country": bson.M{"$regex": filters.Query, "$options": "i"}},
+			bson.M{"state": bson.M{"$regex": filters.Query, "$options": "i"}},
+			bson.M{"stadium": bson.M{"$regex": filters.Query, "$options": "i"}},
+			bson.M{"sponsor": bson.M{"$regex": filters.Query, "$options": "i"}},
+		}
+	}
 	if filters.Name != "" {
 		filter["name"] = filters.Name
 	}
@@ -227,6 +275,10 @@ func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.
 	}
 	if filters.Stadium != "" {
 		filter["stadium"] = filters.Stadium
+	}
+
+	if filters.Sponsor != "" {
+		filter["sponsor"] = filters.Sponsor
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
@@ -253,7 +305,6 @@ func getTeam(filters TeamRequest, pageNumber string, pageSize string) ([]models.
 
 	return teams, total, page, perPage, nil
 }
-
 
 func getPlayers(filters PlayerRequest, pageNumber string, pageSize string) ([]models.Player, int64, int64, int64, error) {
 	perPage := int64(15)
@@ -309,7 +360,7 @@ func getPlayers(filters PlayerRequest, pageNumber string, pageSize string) ([]mo
 	return players, total, page, perPage, nil
 }
 
-func getSinglePlayer(ID string) (*models.Player, error){
+func getSinglePlayer(ID string) (*models.Player, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 

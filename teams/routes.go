@@ -21,6 +21,6 @@ func TeamRoutes(superRoute *gin.RouterGroup) {
 		teamRouter.PATCH("/:id", middleware.RolesMiddleware(admins), updateHandler)
 		teamRouter.DELETE("/:id", middleware.RolesMiddleware(admins), deleteHandler)
 		teamRouter.GET("/players", getPlayersHandler)
-		teamRouter.GET("/players/:id", getPlayersHandler)
+		teamRouter.GET("/players/:id", getPlayerHandler)
 	}
 }
