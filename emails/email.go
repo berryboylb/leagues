@@ -22,12 +22,12 @@ func init() {
 
 	user = os.Getenv("SMTP_USER") // Removed := operator
 	if user == "" {
-		log.Fatal("Error loading env variables")
+		log.Fatal("Error loading smtp user variables")
 	}
 
 	smtpPassword := os.Getenv("SMTP_PASSWORD")
 	if smtpPassword == "" {
-		log.Fatal("Error loading env variables")
+		log.Fatal("Error loading smtp password variables")
 	}
 	Auth = smtp.PlainAuth("", user, smtpPassword, "smtp.gmail.com")
 }

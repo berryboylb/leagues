@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 
 	"context"
 	"fmt"
@@ -15,10 +15,10 @@ import (
 )
 
 func EnvMongoURI() string {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env var for mongodb file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env var for mongodb file")
+	// }
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
 		log.Fatal("You must set your 'MONGODB_URI' environment variable.")

@@ -6,7 +6,7 @@ import (
 	"league/auth"
 	"league/users"
 	"league/fixtures"
-	"league/teams"
+	"league/e-teams"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {

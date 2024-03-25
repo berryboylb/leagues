@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,10 +47,10 @@ func init() {
 		}
 	}
 
-	err = godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+	// err = godotenv.Load()
+	// if err != nil {
+	// 	log.Println("Error loading .env file")
+	// }
 	adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
 	adminLastName = os.Getenv("ADMIN_FIRST_NAME")
 	adminEmail = os.Getenv("ADMIN_EMAIL")
@@ -87,7 +87,11 @@ func createAdmin() {
 				log.Fatal("Error creating super admin details")
 				return
 			}
+			fmt.Println("Super admin created successfully")
 		}
+	}
+	if user.Id != primitive.NilObjectID {
+		fmt.Println("Super admin already exists")
 	}
 }
 

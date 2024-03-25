@@ -12,7 +12,7 @@ import (
 	// "github.com/gin-contrib/ratelimit"
 	"github.com/fatih/color"
 	"github.com/gin-contrib/cors"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	"go.uber.org/ratelimit"
 	"league/db"
 )
@@ -32,9 +32,9 @@ func leakBucket() gin.HandlerFunc {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Failed to load the env vars: %v", err)
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatalf("Failed to load the env vars: %v", err)
+	// }
 
 	// ctx :=
 	// apitoolkitClient, err := apitoolkit.NewClient(context.Background(), apitoolkit.Config{APIKey: os.Getenv("API_TOOLKIT")})
@@ -55,7 +55,7 @@ func main() {
 	// connect db
 	db.ConnectDB()
 
-	app.Run(":3000")
+	app.Run(":8000")
 
-	log.Print("Server listening on http://localhost:3000/")
+	log.Print("Server listening on http://localhost:8000/")
 }

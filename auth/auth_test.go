@@ -4,8 +4,8 @@ import (
 	"fmt"
 	// "reflect"
 	"league/helpers"
-	"github.com/joho/godotenv"
-	"log"
+	// "github.com/joho/godotenv"
+	// "log"
 	"os"
 	"league/models"
 	"testing"
@@ -15,9 +15,9 @@ import (
 //load env
 func TestMain(m *testing.M) {
 	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatalf("Error loading .env file: %v", err)
+	// }
 
 	// Run tests
 	exitCode := m.Run()

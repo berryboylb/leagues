@@ -1,34 +1,41 @@
-version: "3"
+version: "3.8"
 services:
-  jobboard:
-    container_name: league
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./:/app
-    environment:
-      - MONGODB_DATABASE_URL=mongodb://mongodb:27017/league
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_PASSWORD=
-    command: ["air"]
-    depends_on:
-      - mongodb
-      - redis
   mongodb:
     image: mongo
-    container_name: mongodb345
+    container_name: mongodbleague
     ports:
       - "27017:27017"
     volumes:
       - ./mongodb-data:/data/db  # Persist MongoDB data\
+    command: mongod --quiet
   redis:
     image: redis 
+    restart: always
     ports:
       - "6379:6379"
     volumes:
-      - ./redis:/data/db
+      - ./redis:/data
+  league:
+    container_name: league
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/league
+      - REDIS_HOST=redis:6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+    depends_on:
+      - mongodb
+      - redis
+    links:
+      - mongodb
+      - redis
 

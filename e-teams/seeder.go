@@ -1,7 +1,7 @@
 package teams
 
 import (
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,24 +24,24 @@ var adminEmail string
 var adminUser models.User
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Println("Error loading .env file")
+	// }
 	adminEmail = os.Getenv("ADMIN_EMAIL")
 	if adminEmail == "" {
 		log.Fatal("Error loading super admin details")
 	}
-
-	err = syncAdmin()
+	err := syncAdmin()
 	if err != nil {
 		log.Fatal("Error loading admin data")
 	}
+	fmt.Println("Checking teams for empty collection...")
 	if empty := isCollectionEmpty(teamCollection); empty {
-
 		SeedTeams()
+	}else{
+		fmt.Println("Teams collection is not empty")
 	}
-
 }
 
 func syncAdmin() error {
@@ -61,6 +61,7 @@ func syncAdmin() error {
 }
 
 func isCollectionEmpty(collection *mongo.Collection) bool {
+	fmt.Println("checking if team  collection is empty...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

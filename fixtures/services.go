@@ -221,8 +221,8 @@ func getFixtures(query SearchFeaturesRequest, pageNumber string, pageSize string
 		if perPageNum, err := strconv.Atoi(pageSize); err == nil {
 			perPage = int64(perPageNum)
 		}
-		if perPage > 50 {
-			perPage = 50
+		if perPage > 100 {
+			perPage = 100
 		}
 	}
 
