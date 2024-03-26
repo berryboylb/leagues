@@ -14,7 +14,7 @@ import (
 	"github.com/gin-contrib/cors"
 	// "github.com/joho/godotenv"
 	"go.uber.org/ratelimit"
-	"league/db"
+	// "league/db"
 )
 
 var (
@@ -48,12 +48,12 @@ func main() {
 	// app.Use(apitoolkitClient.GinMiddleware)
 	app.Use(cors.Default())
 	app.Use(leakBucket())
-	router := app.Group("/api/v1")
+	// router := app.Group("/api/v1")
 
-	AddRoutes(router)
+	// AddRoutes(router)
 
 	// connect db
-	db.ConnectDB()
+	// db.ConnectDB()
 
 	app.Run(":8000")
 
