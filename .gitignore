@@ -22,6 +22,8 @@ go.work
 
 *env
 
+/tmp
+
 /mongodb-data
 
 /redis/dump.rdb

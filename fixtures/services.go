@@ -358,7 +358,7 @@ func getSingleFixture(ID string) (*Fixture, error) {
 		}
 	} else {
 		// If no documents are returned by the pipeline
-		return nil, fmt.Errorf("team with the id %v is not found", ID)
+		return nil, fmt.Errorf("fixture with the id %v is not found", ID)
 	}
 
 	return &fixture, nil
