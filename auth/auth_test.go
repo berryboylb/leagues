@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -16,9 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func init() {
-	os.Setenv("MONGODB_URI", "mongodb+srv://admin:test1234@test.ct3433r.mongodb.net/league?retryWrites=true&w=majority")
-}
 
 var (
 	testDBURI    = "mongodb://localhost:27017/testdb"
