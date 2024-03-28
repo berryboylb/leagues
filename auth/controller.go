@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"league/helpers"
-	"league/jwt"
+	"league/jwt" //remove during unit tests
 	"league/models"
 	// "league/models"
 	// "league/notifications"

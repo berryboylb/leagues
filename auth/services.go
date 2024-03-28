@@ -6,8 +6,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"league/db"
-	"league/emails"
+	"league/db" //remove during unit tests
+	"league/emails" //remove during unit tests
 	"league/helpers"
 	"league/models"
 
@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
+	// "os"
 	"time"
 
 	"strings"
@@ -31,6 +31,7 @@ var adminPassword string
 
 var userCollection *mongo.Collection = db.GetCollection(db.MongoClient, "users")
 var duration time.Duration = 10 * time.Second
+// var userCollection *mongo.Collection  //this is for testing
 
 func init() {
 	//check for email index
@@ -51,17 +52,16 @@ func init() {
 	// if err != nil {
 	// 	log.Println("Error loading .env file")
 	// }
-	adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
-	adminLastName = os.Getenv("ADMIN_FIRST_NAME")
-	adminEmail = os.Getenv("ADMIN_EMAIL")
-	adminPassword = os.Getenv("ADMIN_PASSWORD")
+	// adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
+	// adminLastName = os.Getenv("ADMIN_FIRST_NAME")
+	// adminEmail = os.Getenv("ADMIN_EMAIL")
+	// adminPassword = os.Getenv("ADMIN_PASSWORD")
 
 	if adminFirstName == "" || adminEmail == "" || adminPassword == "" || adminLastName == "" {
 		log.Fatal("Error loading super admin details")
 	}
 	createAdmin()
 }
-
 
 
 
@@ -169,6 +169,7 @@ func sendOtp(user *models.User, title string) {
 		return
 	}
 
+	//remove unit tests
 	err = emails.SendOTPEmail(user.Email, otp, title)
 	if err != nil {
 		fmt.Printf("could not send email: %v \n", err)

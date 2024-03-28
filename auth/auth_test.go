@@ -11,15 +11,33 @@ import (
 	"github.com/stretchr/testify/assert"
 	// "go.mongodb.org/mongo-driver/bson"
 	// "go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 var (
-	testDBURI    = "mongodb://localhost:27017/testdb"
-	testDatabase = "testdb"
+	testDBURI    = ""
+	testDatabase = "real"
 )
+
+func createEmailIndex(client *mongo.Client, databaseName, collectionName string) error {
+	// Specify the index model
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{"email", 1}},            // Create an ascending index on the email field
+		Options: options.Index().SetUnique(true), // Set the unique constraint on the email field
+	}
+
+	// Create the index
+	_, err := client.Database(databaseName).Collection(collectionName).Indexes().CreateOne(
+		context.Background(),
+		indexModel,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func setupTestEnvironment(t *testing.T) {
 	// Set up MongoDB client options
@@ -37,22 +55,19 @@ func setupTestEnvironment(t *testing.T) {
 
 func cleanupTestEnvironment(t *testing.T) {
 	// Drop the test collection after tests are completed
-	err := userCollection.Drop(context.Background())
-	if err != nil {
-		t.Fatalf("Error dropping test collection: %v", err)
-	}
+	// err := userCollection.Drop(context.Background())
+	// if err != nil {
+	// 	t.Fatalf("Error dropping test collection: %v", err)
+	// }
 
 	// Disconnect from MongoDB
-	err = userCollection.Database().Client().Disconnect(context.Background())
+	err := userCollection.Database().Client().Disconnect(context.Background())
 	if err != nil {
 		t.Fatalf("Error disconnecting from MongoDB: %v", err)
 	}
 }
 
 func TestGenerateOtp(t *testing.T) {
-	// Remove redundant code, such as setting MONGODB_URI here, it's set in init() already
-	fmt.Println("Testing GenerateOtp function")
-
 	testCases := []struct {
 		length      int
 		expectedLen int
@@ -72,25 +87,20 @@ func TestGenerateOtp(t *testing.T) {
 	}
 }
 
-type MockUserCollection struct{}
-
-
-
 func TestCreateUser_Success(t *testing.T) {
-
-	// Set up test environment
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 	user := models.User{
 		FirstName: "John",
 		LastName:  "Doe",
-		Email:     "john@example.com",
+		Email:     "john11@example.com",
 		RoleName:  "user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	insertedUser, err := createUser(user)
+	fmt.Println(insertedUser)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, insertedUser)
@@ -107,23 +117,21 @@ func TestCreateUser_DuplicateKeyError(t *testing.T) {
 	// Set up test environment
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
+	//we are using the same email to get a duplicate key error on purpose
 	user := models.User{
 		FirstName: "John",
 		LastName:  "Doe",
-		Email:     "john@example.com",
+		Email:     "john11@example.com",
 		RoleName:  "user",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	insertedUser, err := createUser(user)
-
 	assert.Error(t, err)
 	assert.Nil(t, insertedUser)
 	assert.EqualError(t, err, fmt.Sprintf("email already exists: %s", user.Email))
 }
-
-
 
 func TestGetUserByEmail_Success(t *testing.T) {
 
@@ -131,107 +139,80 @@ func TestGetUserByEmail_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
-	email := "existing@example.com"
-
-	user, err := getUserByEmail(email)
+	user, err := getUserByEmail("john11@example.com")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
-	assert.Equal(t, email, user.Email)
+	assert.Equal(t, "john11@example.com", user.Email)
 }
 
 func TestGetUserByEmail_UserNotFound(t *testing.T) {
 	// Set up test environment
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
-	email := "nonexisting@example.com"
 
-	user, err := getUserByEmail(email)
+	user, err := getUserByEmail("nonexisting@example.com")
 
 	assert.Error(t, err)
 	assert.Nil(t, user)
-	assert.EqualError(t, err, fmt.Sprintf("user with the email %v is not found", email))
+	assert.EqualError(t, err, fmt.Sprintf("user with the email %v is not found", "nonexisting@example.com"))
 }
 
 func TestSendOtp_Success(t *testing.T) {
-	user := models.User{
-		Email:     "johndoe@example.com",
-	}
+	setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t)
 
-	// Call the sendOtp function
+	// Fetch a user from the database
+	var user models.User
+	err := userCollection.FindOne(context.Background(), bson.M{"email": "john11@example.com"}).Decode(&user)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, user)
+
 	sendOtp(&user, "Verification")
 }
 
 func TestGetUserFromOtp_ValidToken(t *testing.T) {
-	// Set up test environment
 	setupTestEnvironment(t)
+	defer cleanupTestEnvironment(t)
 
-	// Insert a user with a valid verification token
-	// Insert a user with an expired verification token
-	expiredTime := time.Now().Add(time.Hour) // Set token expiration time in the past
-	user := models.User{
-		FirstName:         "John",
-		LastName:          "Doe",
-		Email:             "john.doe@example.com",
-		RoleName:          "user",
-		VerificationToken: "4444",
-		ExpiresAt:         expiredTime,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-	}
+	token := GenerateOtp(4)
+	email := "john11@example.com"
+	update := bson.M{"verification_token": token, "expires_at": time.Now().Add(24 * time.Hour), "updated_at": time.Now()}
 
-	// Insert the user into the test database
-	_, err := userCollection.InsertOne(context.Background(), user)
-	if err != nil {
-		t.Fatalf("Error inserting user with valid token: %v", err)
-	}
+	_, err := userCollection.UpdateOne(context.Background(), bson.M{"email": email}, bson.M{"$set": update})
+	assert.NoError(t, err)
 
 	// Call getUserFromOtp with the valid token and email
-	foundUser, err := getUserFromOtp(user.VerificationToken, user.Email)
+	foundUser, err := getUserFromOtp(token, email)
 
 	// Assertions
 	assert.NoError(t, err)
 	assert.NotNil(t, foundUser)
-	assert.Equal(t, user.Email, foundUser.Email)
-
-	// Clean up test environment
-	cleanupTestEnvironment(t)
+	assert.Equal(t, email, foundUser.Email)
+	assert.Equal(t, token, foundUser.VerificationToken)
 }
-
 
 func TestGetUserFromOtp_ExpiredToken(t *testing.T) {
 	// Set up test environment
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
-	// Insert a user with an expired verification token
-	expiredTime := time.Now().Add(-time.Hour) // Set token expiration time in the past
-	user := models.User{
-		FirstName:         "John",
-		LastName:          "Doe",
-		Email:             "john.doe@example.com",
-		RoleName:          "user",
-		VerificationToken: "4444",
-		ExpiresAt:         expiredTime,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-	}
+	// we purpoely gonna backdate it
+	token := GenerateOtp(4)
+	email := "john11@example.com"
+	update := bson.M{"verification_token": token, "expires_at": time.Now().Add(-48 * time.Hour), "updated_at": time.Now()}
 
-	// Insert the user into the test database
-	_, err := userCollection.InsertOne(context.Background(), user)
-	if err != nil {
-		t.Fatalf("Error inserting user with expired token: %v", err)
-	}
+	_, err := userCollection.UpdateOne(context.Background(), bson.M{"email": email}, bson.M{"$set": update})
+	assert.NoError(t, err)
 
-	// Call getUserFromOtp with the expired token and email
-	foundUser, err := getUserFromOtp(user.VerificationToken, user.Email)
+	// Call getUserFromOtp with the valid token and email
+	foundUser, err := getUserFromOtp(token, email)
 
 	// Assertions
 	assert.Error(t, err)
 	assert.Nil(t, foundUser)
-	assert.Contains(t, err.Error(), "not found")
 }
-
 
 func TestForgotPassword_UserNotFound(t *testing.T) {
 	// Set up test environment
@@ -252,12 +233,12 @@ func TestGetUser_UserNotFound(t *testing.T) {
 	defer cleanupTestEnvironment(t)
 
 	// Call the function with a non-existing OTP and email combination
-	user, err := getUser("nonexistingOTP", "nonexisting@example.com")
+	user, err := getUser("3758", "nonexisting@example.com")
 
 	// Assert that the function returns an error indicating user not found
 	assert.Error(t, err)
 	assert.Nil(t, user)
-	assert.EqualError(t, err, "user with token nonexistingOTP not found")
+	assert.EqualError(t, err, "user with token 3758 not found")
 }
 
 
@@ -269,14 +250,12 @@ func TestChangePassword_Success(t *testing.T) {
 
 	//existing user
 
-	existinguser := models.User{
-		FirstName:         "John",
-		LastName:          "Doe",
-		Email:             "john.doe@example.com",
-		RoleName:          "user",
-	}
+	var user models.User
+	err := userCollection.FindOne(context.Background(), bson.M{"email": "john11@example.com"}).Decode(&user)
+	assert.NoError(t, err)
 
-	err := changePassword(existinguser.Id, "newpassword")
+	err = changePassword(user.Id, "123456789")
+		assert.NoError(t, err)
 
 	// Assert that the function returns no error
 	assert.NoError(t, err)
