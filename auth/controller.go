@@ -41,7 +41,7 @@ func signUpUserHandler(ctx *gin.Context) {
 	}
 	newUser := models.User{
 		FirstName: req.FirstName,
-		LastName:  req.FirstName,
+		LastName:  req.LastName,
 		Email:     req.Email,
 		RoleName:  models.UserRole,
 		Password:  hash,
@@ -148,7 +148,7 @@ func signUpAdminHandler(ctx *gin.Context) {
 	}
 	newUser := models.User{
 		FirstName: req.FirstName,
-		LastName:  req.FirstName,
+		LastName:  req.LastName,
 		Email:     req.Email,
 		RoleName:  models.AdminRole,
 		Password:  hash,

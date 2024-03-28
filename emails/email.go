@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/smtp"
 	"os"
-
 	// "github.com/joho/godotenv"
 )
 
@@ -36,8 +35,18 @@ type EmailData struct {
 	OTP string
 }
 
+const htmlTemplateString = `
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Hello</h1>
+    <p>Your OTP is: {{.OTP}}</p>
+  </body>
+</html>
+`
+
 func SendOTPEmail(userEmail string, otp string, title string) error {
-	tmpl, err := template.ParseFiles("emails/templates/otp.html")
+	tmpl, err := template.New("otpEmail").Parse(htmlTemplateString)
 	if err != nil {
 		return err
 	}
@@ -61,6 +70,9 @@ func SendOTPEmail(userEmail string, otp string, title string) error {
 
 	fmt.Println("start sending email")
 	err = smtp.SendMail("smtp.gmail.com:587", Auth, user, []string{userEmail}, msg)
+	if err != nil {
+        return err
+    }
 	fmt.Println("stop sending email")
-	return err
+	return nil
 }

@@ -9,12 +9,11 @@ import (
 
 	// apitoolkit "github.com/apitoolkit/apitoolkit-go"
 	"github.com/gin-gonic/gin"
-	// "github.com/gin-contrib/ratelimit"
 	"github.com/fatih/color"
 	"github.com/gin-contrib/cors"
 	// "github.com/joho/godotenv"
 	"go.uber.org/ratelimit"
-	// "league/db"
+	"league/db"
 )
 
 var (
@@ -48,12 +47,12 @@ func main() {
 	// app.Use(apitoolkitClient.GinMiddleware)
 	app.Use(cors.Default())
 	app.Use(leakBucket())
-	// router := app.Group("/api/v1")
+	router := app.Group("/api/v1")
 
-	// AddRoutes(router)
+	AddRoutes(router)
 
-	// connect db
-	// db.ConnectDB()
+	// connect db, but remove to run e2e tests
+	db.ConnectDB()
 
 	app.Run(":8000")
 

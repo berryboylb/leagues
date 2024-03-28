@@ -11,6 +11,7 @@ import (
 
 func AddRoutes(superRoute *gin.RouterGroup) {
 	//register routes
+	//comment to rune2e tests
 	auth.AuthRoutes(superRoute)
 	users.UserRoutes(superRoute)
 	fixtures.FixtureRoutes(superRoute)
