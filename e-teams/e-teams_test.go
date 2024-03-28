@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	testDBURI    = "mongodb+srv://admin:test1234@test.ct3433r.mongodb.net/?retryWrites=true&w=majority"
+	testDBURI    = ""
 	testDatabase = "real"
 )
 
