@@ -2,7 +2,7 @@ package teams
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,13 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func init() {
-	os.Setenv("MONGODB_URI", "mongodb+srv://admin:test1234@test.ct3433r.mongodb.net/league?retryWrites=true&w=majority")
-}
-
 var (
-	testDBURI    = "mongodb://localhost:27017/testdb"
-	testDatabase = "testdb"
+	testDBURI    = "mongodb+srv://admin:test1234@test.ct3433r.mongodb.net/?retryWrites=true&w=majority"
+	testDatabase = "real"
 )
 
 func setupTestEnvironment(t *testing.T) {
@@ -40,13 +36,13 @@ func setupTestEnvironment(t *testing.T) {
 
 func cleanupTestEnvironment(t *testing.T) {
 	// Drop the test collection after tests are completed
-	err := teamCollection.Drop(context.Background())
-	if err != nil {
-		t.Fatalf("Error dropping test collection: %v", err)
-	}
+	// err := teamCollection.Drop(context.Background())
+	// if err != nil {
+	// 	t.Fatalf("Error dropping test collection: %v", err)
+	// }
 
 	// Disconnect from MongoDB
-	err = teamCollection.Database().Client().Disconnect(context.Background())
+	err := teamCollection.Database().Client().Disconnect(context.Background())
 	if err != nil {
 		t.Fatalf("Error disconnecting from MongoDB: %v", err)
 	}
@@ -59,11 +55,11 @@ func TestCreateTeam_Success(t *testing.T) {
 
 	// Create a team object
 	team := models.Team{
-		Name:        "chelsea",
-		State:       "cobham",
-		Country:     "englangy",
+		Name:        "manchester",
+		State:       "hudders",
+		Country:     "englan",
 		FoundedYear: 200,
-		Stadium:     "stamford",
+		Stadium:     "hudders",
 		Sponsor:     "three",
 		CreatedBy:   primitive.NewObjectID(),
 		CreatedAt:   time.Now(),
@@ -71,11 +67,19 @@ func TestCreateTeam_Success(t *testing.T) {
 	}
 
 	// Call the createTeam function
-	insertedTeam, err := createTeam(team)
+	resp, err := createTeam(team)
 
 	// Assert that the function returns no error and the insertedTeam is not nil
 	assert.NoError(t, err)
-	assert.NotNil(t, insertedTeam)
+	assert.NotNil(t, resp)
+
+	assert.Equal(t, team.Name, resp.Name)
+	assert.Equal(t, team.State, resp.State)
+	assert.Equal(t, team.Country, resp.Country)
+	assert.Equal(t, team.FoundedYear, resp.FoundedYear)
+	assert.Equal(t, team.Stadium, resp.Stadium)
+	assert.Equal(t, team.Sponsor, resp.Sponsor)
+	assert.Equal(t, team.CreatedBy, resp.CreatedBy)
 }
 
 func TestCreateTeam_DuplicateError(t *testing.T) {
@@ -102,7 +106,7 @@ func TestCreateTeam_DuplicateError(t *testing.T) {
 	// Assert that the function returns an error indicating duplicate key
 	assert.Error(t, err)
 	assert.Nil(t, insertedTeam)
-	assert.EqualError(t, err, "name  Existing Team or stadium Existing Stadium already exists")
+	assert.EqualError(t, err, fmt.Sprintf("name  %s or stadium %s already exists", team.Name, team.Stadium))
 }
 
 func TestGetSingleTeam_Success(t *testing.T) {
@@ -110,25 +114,9 @@ func TestGetSingleTeam_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
-	// Create a team object
-	team := models.Team{
-		Name:        "manchester city",
-		State:       "rand",
-		Country:     "englanf",
-		FoundedYear: 2000,
-		Stadium:     "emirates",
-		Sponsor:     "chevrolet",
-		CreatedBy:   primitive.NewObjectID(),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-	resp, err := createTeam(team)
-	assert.NoError(t, err)
-
 	// Call the getSingleTeam function
-	teamWithCreator, err := getSingleTeam(resp.ID.Hex())
+	teamWithCreator, err := getSingleTeam("66058baf3166ffd82cd5ff46")
 
-	// Assert that the function returns no error and the teamWithCreator is not nil
 	assert.NoError(t, err)
 	assert.NotNil(t, teamWithCreator)
 }
@@ -138,13 +126,14 @@ func TestGetSingleTeam_NotFound(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
+	id := primitive.NewObjectID().Hex()
 	// Call the getSingleTeam function with a non-existing team ID
-	teamWithCreator, err := getSingleTeam(primitive.NewObjectID().Hex())
+	teamWithCreator, err := getSingleTeam(id)
 
 	// Assert that the function returns an error indicating team not found
 	assert.Error(t, err)
 	assert.Nil(t, teamWithCreator)
-	assert.EqualError(t, err, "team with the id "+primitive.NewObjectID().Hex()+" is not found")
+	assert.EqualError(t, err, "team with the id "+id+" is not found")
 }
 
 func TestDeleteTeam_Success(t *testing.T) {
@@ -152,23 +141,9 @@ func TestDeleteTeam_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
-	// Create a team object
-	team := models.Team{
-		Name:        "manchester city",
-		State:       "rand",
-		Country:     "england",
-		FoundedYear: 2000,
-		Stadium:     "emirates",
-		Sponsor:     "chevrolet",
-		CreatedBy:   primitive.NewObjectID(),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-	resp, err := createTeam(team)
-	assert.NoError(t, err)
 
 	// Call the deleteTeam function
-	err = deleteTeam(resp.ID.Hex())
+	err := deleteTeam("66058baf3166ffd82cd5ff46")
 
 	// Assert that the function returns no error
 	assert.NoError(t, err)
@@ -178,21 +153,6 @@ func TestUpdateTeam_Success(t *testing.T) {
 	// Set up test environment
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
-
-	// Create a team object
-	team := models.Team{
-		Name:        "manchester city",
-		State:       "rand",
-		Country:     "england",
-		FoundedYear: 2000,
-		Stadium:     "emirates",
-		Sponsor:     "chevrolet",
-		CreatedBy:   primitive.NewObjectID(),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-	resp, err := createTeam(team)
-	assert.NoError(t, err)
 
 	// Update fields
 	update := TeamRequest{
@@ -205,7 +165,7 @@ func TestUpdateTeam_Success(t *testing.T) {
 	}
 
 	// Call the updateUser function
-	updatedTeam, err := updateUser(resp.ID.Hex(), update)
+	updatedTeam, err := updateUser("66058baf3166ffd82cd5ff46", update)
 
 	// Assert that the function returns no error and the updatedTeam is not nil
 	assert.NoError(t, err)
@@ -225,38 +185,10 @@ func TestGetTeam_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
-	// Create teams
-	team1 := models.Team{
-		Name:        "leicester city",
-		State:       "london",
-		Country:     "england",
-		FoundedYear: 2000,
-		Stadium:     "stud",
-		Sponsor:     "emirates",
-		CreatedBy:   primitive.NewObjectID(),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-	team2 := models.Team{
-		Name:        "arsenal",
-		State:       "huddersfield",
-		Country:     "england",
-		FoundedYear: 2005,
-		Stadium:     "stud",
-		Sponsor:     "emirates",
-		CreatedBy:   primitive.NewObjectID(),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-	resp1, err := createTeam(team1)
-	assert.NoError(t, err)
-	assert.NotNil(t, resp1)
-	resp2, err := createTeam(team2)
-	assert.NoError(t, err)
-	assert.NotNil(t, resp2)
+	
 	// Define filters
 	filters := TeamQueryRequest{
-		Query: "england",
+		Query: "suadi arabia",
 	}
 
 	// Call the getTeam function
@@ -265,4 +197,5 @@ func TestGetTeam_Success(t *testing.T) {
 	// Assert that the function returns no error and the teams slice is not empty
 	assert.NoError(t, err)
 	assert.NotEmpty(t, teams)
+	assert.Greater(t, len(teams), 0)
 }

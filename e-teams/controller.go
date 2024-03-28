@@ -227,7 +227,6 @@ func getPlayersHandler(ctx *gin.Context) {
 }
 
 func getPlayerHandler(ctx *gin.Context) {
-	fmt.Println("hell")
 	player, err := getSinglePlayer(ctx.Param("id"))
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
