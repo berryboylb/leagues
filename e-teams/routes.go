@@ -3,7 +3,7 @@ package teams
 import (
 	"github.com/gin-gonic/gin"
 
-	// "league/jwt" //remove during test
+	"league/jwt" //remove during test
 	"league/middleware"
 	"league/models"
 )
@@ -15,7 +15,7 @@ func TeamRoutes(superRoute *gin.RouterGroup) {
 	{
 		teamRouter.GET("/", getHandler)
 
-		// teamRouter.Use(jwt.Middleware())
+		teamRouter.Use(jwt.Middleware())
 		teamRouter.POST("/", middleware.RolesMiddleware(admins), createHandler)
 		teamRouter.GET("/:id", getSingleHandler)
 		teamRouter.PATCH("/:id", middleware.RolesMiddleware(admins), updateHandler)

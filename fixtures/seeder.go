@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-var teamCollection *mongo.Collection = db.GetCollection(db.MongoClient, "teams")
-
+var teamCollection *mongo.Collection = db.GetCollection(db.MongoClient, "teams") //chsnge during testing
+// var teamCollection *mongo.Collection
 func isCollectionEmpty(collection *mongo.Collection) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -129,7 +129,7 @@ func generateFixtures(competition []models.Competition, teams []models.Team) []i
 				"Turf Moor", "Stamford Bridge", "Selhurst Park", "Goodison Park", "Elland Road", "King Power Stadium",
 				"Anfield", "Etihad Stadium", "Old Trafford", "St James' Park", "Carrow Road", "St Mary's Stadium",
 				"Tottenham Hotspur Stadium", "Vicarage Road", "London Stadium", "Molineux Stadium"}[rand.Intn(20)],
-			Referee:    fmt.Sprint("%v %v", ref[rand.Intn(len(ref))], ref[rand.Intn(len(ref))]),
+			Referee:    fmt.Sprintf("%v %v", ref[rand.Intn(len(ref))], ref[rand.Intn(len(ref))]),
 			UniqueLink: hash,
 			Away: models.Details{
 				Substitutes:    awaySubs,

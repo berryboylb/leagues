@@ -20,6 +20,10 @@ import (
 
 var competitionCollection *mongo.Collection = db.GetCollection(db.MongoClient, "competitions")
 var fixtureCollection *mongo.Collection = db.GetCollection(db.MongoClient, "fixtures")
+
+//for unit tests
+// var competitionCollection *mongo.Collection 
+// var fixtureCollection *mongo.Collection 
 var duration time.Duration = 10 * time.Second
 
 func init() {
@@ -486,6 +490,10 @@ func updateFixtureStats(ID string, update UpdateFixtureStats) (*models.Fixture, 
 		updates["home.shots_on_target"] = update.Home.ShotsOnTarget
 	}
 
+	if update.Home.Shots!= 0 {
+		updates["home.shots"] = update.Home.Shots
+	}
+
 	if update.Home.Possession != 0 {
 		updates["home.possession"] = update.Home.Possession
 	}
@@ -536,6 +544,10 @@ func updateFixtureStats(ID string, update UpdateFixtureStats) (*models.Fixture, 
 
 	if update.Away.Goals != 0 {
 		updates["away.goals"] = update.Away.Goals
+	}
+
+	if update.Away.Shots!= 0 {
+		updates["away.shots"] = update.Away.Shots
 	}
 
 	if update.Away.ShotsOnTarget != 0 {

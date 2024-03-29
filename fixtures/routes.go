@@ -3,7 +3,7 @@ package fixtures
 import (
 	"github.com/gin-gonic/gin"
 
-	"league/jwt"
+	"league/jwt" //remove during unit tests
 	"league/middleware"
 	"league/models"
 )
