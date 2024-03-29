@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"github.com/joho/godotenv"
-	"log"
+	// "github.com/joho/godotenv"
+	// "log"
 	"os"
 	"strconv"
 	"time"
@@ -17,10 +17,10 @@ var client *redis.Client
 var ctx = context.Background()
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Println("Error loading .env file")
+	// }
 
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	redisDB := os.Getenv("REDIS_DB")

@@ -2,9 +2,8 @@ package users
 
 import (
 	"context"
-	
-	"testing"
 
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	// "go.mongodb.org/mongo-driver/bson"
@@ -13,10 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 var (
-	testDBURI    = "mongodb://localhost:27017/testdb"
-	testDatabase = "testdb"
+	testDBURI    = "mongodb+srv://admin:test1234@test.ct3433r.mongodb.net/?retryWrites=true&w=majority"
+	testDatabase = "real"
 )
 
 func setupTestEnvironment(t *testing.T) {
@@ -35,26 +33,22 @@ func setupTestEnvironment(t *testing.T) {
 
 func cleanupTestEnvironment(t *testing.T) {
 	// Drop the test collection after tests are completed
-	err := userCollection.Drop(context.Background())
-	if err != nil {
-		t.Fatalf("Error dropping test collection: %v", err)
-	}
+	// err := userCollection.Drop(context.Background())
+	// if err != nil {
+	// 	t.Fatalf("Error dropping test collection: %v", err)
+	// }
 
 	// Disconnect from MongoDB
-	err = userCollection.Database().Client().Disconnect(context.Background())
+	err := userCollection.Database().Client().Disconnect(context.Background())
 	if err != nil {
 		t.Fatalf("Error disconnecting from MongoDB: %v", err)
 	}
 }
 
-
-
-
 // TestUpdateUser_Success tests the updateUser function.
 func TestUpdateUser_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
-
 
 	// Define update fields
 	update := UserRequest{
@@ -64,7 +58,7 @@ func TestUpdateUser_Success(t *testing.T) {
 	}
 
 	// Call updateUser function
-	updatedUser, err := updateUser(primitive.NewObjectID().Hex(), update)
+	updatedUser, err := updateUser("6606bbc3d5330e500a58558a", update) //gotten from db
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedUser)
 
@@ -79,8 +73,11 @@ func TestDeleteUser_Success(t *testing.T) {
 	setupTestEnvironment(t)
 	defer cleanupTestEnvironment(t)
 
+	ID, err := primitive.ObjectIDFromHex("6606bbc3d5330e500a58558a") //gotten from db
+	assert.NoError(t, err)
+
 	// Call deleteUser function
-	err := deleteUser(primitive.NewObjectID())
+	err = deleteUser(ID)
 	assert.NoError(t, err)
 }
 
