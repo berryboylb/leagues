@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	// "os"
+	"os"
 	"time"
 
 	"strings"
@@ -52,10 +52,10 @@ func init() {
 	// if err != nil {
 	// 	log.Println("Error loading .env file")
 	// }
-	// adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
-	// adminLastName = os.Getenv("ADMIN_FIRST_NAME")
-	// adminEmail = os.Getenv("ADMIN_EMAIL")
-	// adminPassword = os.Getenv("ADMIN_PASSWORD")
+	adminFirstName = os.Getenv("ADMIN_FIRST_NAME")
+	adminLastName = os.Getenv("ADMIN_FIRST_NAME")
+	adminEmail = os.Getenv("ADMIN_EMAIL")
+	adminPassword = os.Getenv("ADMIN_PASSWORD")
 
 	if adminFirstName == "" || adminEmail == "" || adminPassword == "" || adminLastName == "" {
 		log.Fatal("Error loading super admin details")

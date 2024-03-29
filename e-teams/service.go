@@ -218,7 +218,7 @@ func updateUser(ID string, update TeamRequest) (*models.Team, error) {
 		if mongoErr, ok := err.(mongo.WriteException); ok {
 			for _, e := range mongoErr.WriteErrors {
 				if e.Code == 11000 {
-					return nil, fmt.Errorf("name  %v or stadium %v already exists", true, true)
+					return nil, fmt.Errorf("name  %v or stadium %v already exists", update.Name, update.Stadium)
 				}
 			}
 		}

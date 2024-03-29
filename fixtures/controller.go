@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"fmt"
 )
 
 func createFixtureHandler(ctx *gin.Context) {
@@ -212,7 +213,9 @@ func generateUniqueHash(ctx *gin.Context) {
 }
 
 func getFixtureByHash(ctx *gin.Context) {
-	resp, err := getSingleFixtureByHash(ctx.Param("link"))
+	hash := ctx.Param("link")
+	fmt.Println(hash)
+	resp, err := getSingleFixtureByHash(hash)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -257,9 +260,9 @@ func searchHandler(ctx *gin.Context) {
 		}
 	}
 	query := SearchFeaturesRequest{
-		Query:       ctx.Query("query"),
-		From:        from,
-		To:          to,
+		Query: ctx.Query("query"),
+		From:  from,
+		To:    to,
 	}
 
 	resp, total, page, perPage, err := getFixtures(query, ctx.Query("page"), ctx.Query("per_page"))

@@ -627,11 +627,11 @@ func deleteFixture(ID string) error {
 
 	result, err := fixtureCollection.DeleteOne(ctx, bson.M{"_id": objId})
 	if err != nil {
-		return fmt.Errorf("failed to delete team: %v", err)
+		return fmt.Errorf("failed to delete fixture: %v", err)
 	}
 
 	if result.DeletedCount == 0 {
-		return fmt.Errorf("no team found with ID %s", ID)
+		return fmt.Errorf("no fixture found with ID %s", ID)
 	}
 
 	return nil

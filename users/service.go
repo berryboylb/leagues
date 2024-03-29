@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	// "league/db"
+	"league/db"
 	"league/models"
 	"league/redis"
 
@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-// var userCollection *mongo.Collection = db.GetCollection(db.MongoClient, "users")
-var userCollection *mongo.Collection //for tests
+var userCollection *mongo.Collection = db.GetCollection(db.MongoClient, "users")
+// var userCollection *mongo.Collection //for tests
 var duration time.Duration = 10 * time.Second
 
 func updateUser(ID string, update UserRequest) (*models.User, error) {
@@ -65,7 +65,7 @@ func updateUser(ID string, update UserRequest) (*models.User, error) {
 		return nil, fmt.Errorf("failed to store user data in Redis: %v", err)
 	}
 	expiration := 10 * time.Minute
-	err = redis.Store(ID, userByte, expiration)
+	err = redis.Store(objID.Hex(), userByte, expiration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to store user data in Redis with expiration: %v", err)
 	}
